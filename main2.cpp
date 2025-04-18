@@ -1,4 +1,7 @@
-#include <SFML/Graphics.hpp>
+#include <iostream>
+#include <cstdlib>
+#include <ctime>
+#include <cctype>
 
 int xp[20], yp[20];
 const int sz = 6;
@@ -121,7 +124,7 @@ void down() {
     delay(300);
 }
 
-int main() {
+void main() {
     clrscr();
     char ch;
     _setcursortype(_NOCURSOR);
