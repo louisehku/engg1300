@@ -9,17 +9,42 @@ const int sz = 6;
 int xx[sz], yy[sz];
 
 void bar(int z) {
-    // Display the bar position
+    // Placeholder for bar function
     std::cout << "Bar position: " << z << std::endl;
 }
 
 void up(int& scr) {
-    // Update score logic when shooting
+    int flag = 0;
+
     for (int i = 0; i < sz; i++) {
-        if (xx[i] != 0) {
-            scr++;
-            xx[i] = 0; // Reset the object
-            std::cout << "Score: " << scr << std::endl;
+        if (xx[i] == 0) {
+            continue;
+        }
+        for (int k = 0; k < 20; k++) {
+            if (xx[i] == xp[k] && yy[i] == yp[k] && xp[k] != 0) {
+                xx[i] = 0;
+                scr++;
+                std::cout << "Score: " << scr << std::endl;
+                if (scr < 10) {
+                    std::cout << " ";
+                }
+            }
+        }
+    }
+
+    for (int i = 0; i < 20; i++) {
+        if (xp[i] != 0) {
+            flag++;
+            if (yp[i] == 1) {
+                std::cout << "Hit!" << std::endl; // Placeholder for hit effect
+            }
+            if (yp[i] == 21) {
+                yp[i]--;
+                // Simulate delay (not implemented)
+            }
+            if (yp[i] == 0) {
+                xp[i] = 0;
+            }
         }
     }
 }
@@ -34,17 +59,18 @@ void status(int x) {
     }
 }
 
-void down(int& x) {
-    // Simulate a target appearing
-    int targetX = rand() % 52 + 7; // Random position for target
+void down() {
+    int x = rand() % 52 + 7; // Random position
+
     for (int i = 0; i < sz; i++) {
         if (xx[i] == 0) {
-            xx[i] = targetX;
-            yy[i] = 2; // Set the y position of the target
-            std::cout << "Target at (" << xx[i] << ", " << yy[i] << ")" << std::endl;
+            xx[i] = x;
+            yy[i] = 2;
+            std::cout << "L at (" << xx[i] << ", " << yy[i] << ")" << std::endl;
             break;
         }
     }
+    // Additional logic can be added here
 }
 
 int main() {
@@ -57,14 +83,12 @@ int main() {
     std::fill_n(xx, sz, 0);
     std::fill_n(yy, sz, 0);
 
-    int x = 0; // Player's bar position
+    int x = 0;
     bar(x);
 
     while (true) {
         status(1);
-        std::cout << "Controls: p - pause, space - shoot, x - exit, a - left, d - right" << std::endl;
 
-        // Check for player input
         if (std::cin >> ch) {
             ch = std::tolower(ch);
             switch (ch) {
@@ -72,28 +96,17 @@ int main() {
                     status(2);
                     break;
                 case ' ':
-                    up(scr); // Increase score on shoot
+                    // Shooting logic (placeholder)
                     break;
                 case 'x':
                     return 0; // Exit the program
-                case 'a':
-                    if (x > 0) {
-                        x--; // Move left
-                        bar(x);
-                    }
-                    break;
-                case 'd':
-                    if (x < 55) {
-                        x++; // Move right
-                        bar(x);
-                    }
-                    break;
                 default:
                     break;
             }
         }
         
-        down(x); // Update game state
+        up(scr);
+        down();
     }
 
     return 0; // Ensure main returns an int
