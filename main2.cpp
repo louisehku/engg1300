@@ -1,9 +1,3 @@
-#include <stdio.h>
-#include <ctype.h>
-#include <string.h>
-#include <conio.h>
-#include <stdlib.h>
-
 int xp[20], yp[20];
 const int sz = 6;
 int xx[sz], yy[sz];
