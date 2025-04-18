@@ -3,6 +3,7 @@
 #include <ctime>
 #include <vector>
 #include <limits>
+#include <ncursesw/ncurses.h>
 
 int xp[20], yp[20];
 const int sz = 6;
