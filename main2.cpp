@@ -1,3 +1,6 @@
+#include <graphics.h> // Only for Turbo C++
+#include <SFML/Graphics.hpp>
+
 int xp[20], yp[20];
 const int sz = 6;
 int xx[sz], yy[sz];
@@ -119,7 +122,7 @@ void down() {
     delay(300);
 }
 
-void main() {
+int main() {
     clrscr();
     char ch;
     _setcursortype(_NOCURSOR);
