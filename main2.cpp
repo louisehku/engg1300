@@ -1,106 +1,110 @@
 #include <iostream>
-#include <cstdlib>
-#include <ctime>
 #include <vector>
-#include <limits>
 #include <ncursesw/ncurses.h>
 #include <unistd.h>
 #include <cmath>
-#include <cstring>
+#include <cstdlib>
+#include <ctime>
 
-class Heart {
-private:
-    float x, y;
-    int lastDrawnX, lastDrawnY;
-    float directionX, directionY;
-    float baseSpeed;
-    float aspectRatio;
-    bool moving;
-    int symbol;
-
+class Bullet {
 public:
-    Heart(int startX, int startY) : 
-        x(static_cast<float>(startX)), y(static_cast<float>(startY)), 
-        lastDrawnX(startX), lastDrawnY(startY),
-        directionX(0.0f), directionY(0.0f),
-        baseSpeed(0.3f), aspectRatio(2.0f), 
-        moving(false), symbol(ACS_DIAMOND) {}
-
-    void update() {
-        if (moving) {
-            x += directionX * baseSpeed * aspectRatio;
-            y += directionY * baseSpeed;
-        }
-    }
-
-    void setDirection(float dx, float dy) {
-        if (dx != 0.0f || dy != 0.0f) {
-            float length = sqrt(dx * dx + dy * dy);
-            directionX = dx / length;
-            directionY = dy / length;
-            moving = true;
-        }
-    }
-
-    void setAspectRatio(float ratio) { aspectRatio = ratio; }
-    void setSpeed(float speed) { baseSpeed = speed; }
-    void stop() { moving = false; }
-    void start() { moving = true; }
-    bool isMoving() const { return moving; }
-    void setPosition(float newX, float newY) { x = newX; }
-    void clearPrevious() { mvaddch(lastDrawnY, lastDrawnX, ' '); }
-    
-    void draw() {
-        int currentX = static_cast<int>(round(x));
-        int currentY = static_cast<int>(round(y));
-        
-        if (currentX != lastDrawnX || currentY != lastDrawnY) {
-            clearPrevious();
-            attron(COLOR_PAIR(1));
-            mvaddch(currentY, currentX, symbol);
-            attroff(COLOR_PAIR(1));
-            lastDrawnX = currentX;
-            lastDrawnY = currentY;
-        } else {
-            attron(COLOR_PAIR(1));
-            mvaddch(currentY, currentX, symbol);
-            attroff(COLOR_PAIR(1));
-        }
-    }
-    
-    float getX() const { return x; }
-    float getY() const { return y; }
+    int x, y;
+    Bullet(int startX, int startY) : x(startX), y(startY) {}
+    void move() { y--; } // Move bullet upwards
 };
 
-class BattleBox {
+class Enemy {
+public:
+    int x, y;
+    Enemy(int startX, int startY) : x(startX), y(startY) {}
+};
+
+class Player {
+public:
+    int x, y;
+    Player(int startX, int startY) : x(startX), y(startY) {}
+    void move(int dx) { x += dx; }
+};
+
+void drawPlayer(const Player& player) {
+    mvaddch(player.y, player.x, ACS_CKBOARD); // Player representation
+}
+
+void drawBullet(const Bullet& bullet) {
+    mvaddch(bullet.y, bullet.x, '|'); // Bullet representation
+}
+
+void drawEnemy(const Enemy& enemy) {
+    mvaddch(enemy.y, enemy.x, '#'); // Enemy representation
+}
+
+bool checkCollision(const Bullet& bullet, const Enemy& enemy) {
+    return bullet.x == enemy.x && bullet.y == enemy.y;
+}
+
+class Game {
 private:
-    int x, y, width, height;
-    bool needsRedraw;
+    Player player;
+    std::vector<Bullet> bullets;
+    std::vector<Enemy> enemies;
+    int score;
 
 public:
-    BattleBox(int startX, int startY, int w, int h) :
-        x(startX), y(startY), width(w), height(h), needsRedraw(true) {}
-
-    void draw() {
-        if (!needsRedraw) return;
-        attron(A_REVERSE);
-        for (int i = -1; i <= width + 1; i++) {
-            mvaddch(y, x + i, ' ');
-            mvaddch(y + height, x + i, ' ');
+    Game() : player(40, 20), score(0) {
+        // Create enemies
+        for (int i = 0; i < 5; i++) {
+            for (int j = 0; j < 10; j++) {
+                enemies.emplace_back(j * 6 + 5, i + 1); // Simple grid formation
+            }
         }
-        for (int i = 0; i <= height; i++) {
-            mvaddch(y + i, x, ' ');
-            mvaddch(y + i, x + width, ' ');
-        }
-        attroff(A_REVERSE);
-        needsRedraw = false;
     }
 
-    void setNeedsRedraw() { needsRedraw = true; }
-    int getX() const { return x; }
-    int getY() const { return y; }
-    int getWidth() const { return width; }
-    int getHeight() const { return height; }
+    void update() {
+        // Move bullets
+        for (int i = 0; i < bullets.size(); i++) {
+            bullets[i].move();
+            // Check for collisions
+            for (int j = 0; j < enemies.size(); j++) {
+                if (checkCollision(bullets[i], enemies[j])) {
+                    bullets.erase(bullets.begin() + i);
+                    enemies.erase(enemies.begin() + j);
+                    score++;
+                    i--; // Adjust index after removal
+                    break; // Exit inner loop
+                }
+            }
+        }
+    }
+
+    void draw() {
+        clear();
+        drawPlayer(player);
+        for (auto& bullet : bullets) {
+            drawBullet(bullet);
+        }
+        for (auto& enemy : enemies) {
+            drawEnemy(enemy);
+        }
+        mvprintw(0, 0, "Score: %d", score);
+        refresh();
+    }
+
+    void handleInput(int ch) {
+        switch (ch) {
+            case KEY_LEFT:
+                if (player.x > 0) player.move(-1);
+                break;
+            case KEY_RIGHT:
+                if (player.x < COLS - 1) player.move(1);
+                break;
+            case ' ':
+                bullets.emplace_back(player.x, player.y - 1); // Shoot bullet
+                break;
+            case 'q':
+                endwin();
+                exit(0); // Quit the game
+        }
+    }
 };
 
 int main() {
@@ -108,50 +112,17 @@ int main() {
     cbreak();
     noecho();
     curs_set(0);
+    keypad(stdscr, TRUE);
     nodelay(stdscr, TRUE);
     
-    if (has_colors()) {
-        start_color();
-        init_pair(1, COLOR_RED, COLOR_BLACK);
-    }
+    Game game;
 
-    int maxY, maxX;
-    getmaxyx(stdscr, maxY, maxX);
-
-    BattleBox battleBox(maxX / 2 - 20, maxY / 2 - 8, 40, 16);
-    Heart heart(maxX / 2, maxY / 2);
-
-    battleBox.draw();
-    mvprintw(maxY - 3, 2, "Arrow keys to move, Space to stop/start");
-    mvprintw(maxY - 2, 2, "Q to quit");
-
-    bool running = true;
-    while (running) {
+    while (true) {
         int ch = getch();
-        if (ch != ERR) {
-            if (ch == 'q' || ch == 'Q') {
-                running = false;
-            } else if (ch == ' ') {
-                if (heart.isMoving()) {
-                    heart.stop();
-                } else {
-                    heart.start();
-                }
-            } else if (ch == KEY_UP) {
-                heart.setDirection(0.0f, -1.0f);
-            } else if (ch == KEY_DOWN) {
-                heart.setDirection(0.0f, 1.0f);
-            } else if (ch == KEY_LEFT) {
-                heart.setDirection(-1.0f, 0.0f);
-            } else if (ch == KEY_RIGHT) {
-                heart.setDirection(1.0f, 0.0f);
-            }
-        }
-
-        heart.update();
-        heart.draw();
-        refresh();
-        usleep(16667);
+        game.handleInput(ch);
+        game.update();
+        game.draw();
+        usleep(100000); // Control game speed
     }
 
     endwin();
