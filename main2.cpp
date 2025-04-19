@@ -162,7 +162,13 @@ int main() {
     
     Game game;
 
-    BattleBox.draw();
+    // Get terminal dimensions
+    int maxY, maxX;
+    getmaxyx(stdscr, maxY, maxX);
+
+    // Create battle box and heart
+    BattleBox battleBox(maxX/2 - 20, maxY/2 - 8, 40, 16);
+    Heart heart(maxX/2, maxY/2);
     
     while (true) {
         int ch = getch();
