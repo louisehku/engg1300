@@ -107,6 +107,51 @@ public:
     }
 };
 
+class BattleBox {
+private:
+    int x, y;         // Top-left corner position
+    int width, height; // Box dimensions
+    bool needsRedraw;  // Flag to determine if the box needs redrawing
+
+public:
+    BattleBox(int startX, int startY, int w, int h) :
+        x(startX), y(startY), width(w), height(h), needsRedraw(true) {}
+
+    void draw() {
+        if (!needsRedraw) return;
+        
+        // Enable reverse highlighting
+        attron(A_REVERSE);
+    
+        // Draw the top and bottom borders of the battle box
+        for (int i = -1; i <= width+1; i++) {
+            mvaddch(y, x + i, ' ');              // Top border (space with reverse highlight)
+            mvaddch(y + height, x + i, ' ');     // Bottom border
+        }
+    
+        // Draw the left and right borders of the battle box
+        for (int i = 0; i <= height; i++) {
+            mvaddch(y + i, x, ' ');              // Left border
+            mvaddch(y + i, x + width, ' ');      // Right border
+            mvaddch(y + i, x-1, ' ');            // Left border
+            mvaddch(y + i, x+1 + width, ' ');    // Right border
+        }
+    
+        // Disable reverse highlighting
+        attroff(A_REVERSE);
+        
+        needsRedraw = false;
+    }
+    void setNeedsRedraw() {
+        needsRedraw = true;
+    }
+
+    int getX() const { return x; }
+    int getY() const { return y; }
+    int getWidth() const { return width; }
+    int getHeight() const { return height; }
+};
+
 int main() {
     initscr();
     cbreak();
@@ -116,6 +161,10 @@ int main() {
     nodelay(stdscr, TRUE);
     
     Game game;
+
+    battleBox.draw();
+    mvprintw(maxY - 3, 2, "Arrow keys to set direction, Space to stop/start");
+    mvprintw(maxY - 2, 2, "Q to quit");
 
     while (true) {
         int ch = getch();
