@@ -61,50 +61,91 @@ public:
     virtual void draw() = 0;
 };
 
-class Paddle : public GameObject {
+class Paddle {
 private:
-    float speed;
-    
+    float x, y;           // Position with floating-point precision for smooth movement
+    int lastDrawnX, lastDrawnY; // Last position where the paddle was drawn
+    float directionX;     // Direction vector (only horizontal movement)
+    float speed;          // Movement speed
+    int width;            // Paddle width
+    bool moving;          // Whether the paddle is moving
+
 public:
-    Paddle(float x, float y, float width, float height, float speed)
-        : GameObject(x, y, width, height), speed(speed) {}
-    
-    void update(float deltaTime) override {
-        // Movement is handled in the Game class based on input
+    Paddle(int startX, int startY, int paddleWidth = 7) : 
+        x(static_cast<float>(startX)), y(static_cast<float>(startY)), 
+        lastDrawnX(startX), lastDrawnY(startY),
+        directionX(0.0f), speed(0.5f), width(paddleWidth), moving(false) {}
+
+    void update() {
+        if (moving) {
+            // Move in the current direction (horizontal only)
+            x += directionX * speed;
+        }
+    }
+
+    void setDirection(float dx) {
+        // Set a new direction vector (horizontal only)
+        directionX = dx;
+        if (dx != 0.0f) {
+            moving = true;  // Start moving when a direction is set
+        }
     }
     
-    void draw() override {
-        int currentX = static_cast<int>(round(position.x));
-        int currentY = static_cast<int>(round(position.y));
+    void setSpeed(float newSpeed) {
+        speed = newSpeed;
+    }
+    
+    void stop() {
+        moving = false;
+    }
+    
+    void start() {
+        moving = true;
+    }
+    
+    bool isMoving() const {
+        return moving;
+    }
+
+    void setPosition(float newX, float newY) {
+        x = newX;
+        y = newY;
+    }
+
+    void clearPrevious() {
+        // Clear the previous position
+        for (int i = 0; i < width; i++) {
+            mvaddch(lastDrawnY, lastDrawnX + i, ' ');
+        }
+    }
+
+    void draw() {
+        int currentX = static_cast<int>(round(x));
+        int currentY = static_cast<int>(round(y));
         
-        // Clear previous position if it changed
+        // Only redraw if position has changed
         if (currentX != lastDrawnX || currentY != lastDrawnY) {
+            // Clear previous position if it's different
             clearPrevious();
+            
+            // Update last drawn position
             lastDrawnX = currentX;
             lastDrawnY = currentY;
         }
         
-        // Draw paddle
-        attron(COLOR_PAIR(2)); // Paddle color
-        for (int x = 0; x < static_cast<int>(size.x); x++) {
-            mvaddch(currentY, currentX + x, ACS_BLOCK);
+        // Draw paddle (a line of characters)
+        attron(COLOR_PAIR(1)); // Paddle color
+        for (int i = 0; i < width; i++) {
+            mvaddch(currentY, currentX + i, '=');
         }
-        attroff(COLOR_PAIR(2));
+        attroff(COLOR_PAIR(1));
     }
-    
-    void moveLeft(float deltaTime, float minX) {
-        position.x -= speed * deltaTime;
-        if (position.x < minX) {
-            position.x = minX;
-        }
-    }
-    
-    void moveRight(float deltaTime, float maxX) {
-        position.x += speed * deltaTime;
-        if (position.x + size.x > maxX) {
-            position.x = maxX - size.x;
-        }
-    }
+
+    float getX() const { return x; }
+    float getY() const { return y; }
+    int getWidth() const { return width; }
+    float getDirectionX() const { return directionX; }
+    float getSpeed() const { return speed; }
 };
 
 // Block class
