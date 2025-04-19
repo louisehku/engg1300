@@ -14,13 +14,6 @@ public:
     void move() { y--; } // Move bullet upwards
 };
 
-// Enemy class
-class Enemy {
-public:
-    int x, y;
-    Enemy(int startX, int startY) : x(startX), y(startY) {}
-};
-
 // Block class
 class Block {
 public:
@@ -56,23 +49,28 @@ class Game {
 private:
     Player player;
     std::vector<Bullet> bullets;
-    std::vector<Enemy> enemies;
     std::vector<Block> blocks; // Vector to hold blocks
     int score;
 
 public:
     Game() : player(40, 20), score(0) {
-        // Create enemies
-        for (int i = 0; i < 5; i++) {
-            for (int j = 0; j < 10; j++) {
-                enemies.emplace_back(j * 6 + 5, i + 1); // Simple grid formation
-            }
-        }
-        
-        // Create blocks
-        for (int i = 0; i < 5; i++) {
-            for (int j = 0; j < 10; j++) {
-                blocks.emplace_back(j * 6 + 5, i + 10); // Block layout below enemies
+        setupBlocks(5, 5); // Setup blocks at a specific position
+    }
+
+    void setupBlocks(int startX, int startY) {
+        float blockWidth = 5.0f;
+        float blockHeight = 1.0f; // Changed height to 1 for simplicity
+        float spacing = 1.0f;
+
+        int rows = 5;
+        int cols = 10; // Fixed number of columns for simplicity
+
+        for (int row = 0; row < rows; row++) {
+            for (int col = 0; col < cols; col++) {
+                int x = startX + col * (blockWidth + spacing);
+                int y = startY + row;
+
+                blocks.emplace_back(x, y); // Create blocks
             }
         }
     }
@@ -81,16 +79,6 @@ public:
         // Move bullets
         for (int i = 0; i < bullets.size(); i++) {
             bullets[i].move();
-            // Check for collisions with enemies
-            for (int j = 0; j < enemies.size(); j++) {
-                if (checkCollision(bullets[i], enemies[j])) {
-                    bullets.erase(bullets.begin() + i);
-                    enemies.erase(enemies.begin() + j);
-                    score++;
-                    i--; // Adjust index after removal
-                    break; // Exit inner loop
-                }
-            }
             // Check for collisions with blocks
             for (int j = 0; j < blocks.size(); j++) {
                 if (blocks[j].checkCollision(bullets[i])) {
@@ -109,9 +97,6 @@ public:
         drawPlayer(player);
         for (auto& bullet : bullets) {
             drawBullet(bullet);
-        }
-        for (auto& enemy : enemies) {
-            drawEnemy(enemy);
         }
         for (auto& block : blocks) {
             block.draw(); // Draw blocks
@@ -143,14 +128,6 @@ public:
 
     void drawBullet(const Bullet& bullet) {
         mvaddch(bullet.y, bullet.x, '|'); // Bullet representation
-    }
-
-    void drawEnemy(const Enemy& enemy) {
-        mvaddch(enemy.y, enemy.x, '#'); // Enemy representation
-    }
-
-    bool checkCollision(const Bullet& bullet, const Enemy& enemy) {
-        return bullet.x == enemy.x && bullet.y == enemy.y;
     }
 };
 
