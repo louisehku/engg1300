@@ -4,7 +4,7 @@
 #include <unistd.h>
 #include <cmath>
 
-class GameObject {
+class GameObject 
 protected:
     struct Position {
         float x, y;
