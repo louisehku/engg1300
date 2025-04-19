@@ -4,6 +4,64 @@
 #include <ncursesw/ncurses.h>
 #include <unistd.h>
 
+// Vector2D class for positions and velocities
+class Vector2D {
+public:
+    float x, y;
+    
+    Vector2D(float x = 0.0f, float y = 0.0f) : x(x), y(y) {}
+    
+    Vector2D operator+(const Vector2D& other) const {
+        return Vector2D(x + other.x, y + other.y);
+    }
+    
+    Vector2D operator*(float scalar) const {
+        return Vector2D(x * scalar, y * scalar);
+    }
+};
+
+// Game object base class
+class GameObject {
+protected:
+    Vector2D position;
+    Vector2D size;
+    bool active;
+    int lastDrawnX, lastDrawnY;
+    
+public:
+    GameObject(float x, float y, float width, float height) 
+        : position(x, y), size(width, height), active(true),
+          lastDrawnX(static_cast<int>(round(x))), lastDrawnY(static_cast<int>(round(y))) {}
+    
+    virtual ~GameObject() {}
+    
+    bool isActive() const { return active; }
+    void setActive(bool state) { active = state; }
+    
+    Vector2D getPosition() const { return position; }
+    Vector2D getSize() const { return size; }
+    
+    // Check collision between objects
+    bool collidesWith(const GameObject& other) const {
+        return (position.x < other.position.x + other.size.x &&
+                position.x + size.x > other.position.x &&
+                position.y < other.position.y + other.size.y &&
+                position.y + size.y > other.position.y);
+    }
+    
+    void clearPrevious() {
+        // Clear the previous position
+        for (int y = 0; y < static_cast<int>(size.y); y++) {
+            for (int x = 0; x < static_cast<int>(size.x); x++) {
+                mvaddch(lastDrawnY + y, lastDrawnX + x, ' ');
+            }
+        }
+    }
+    
+    virtual void update(float deltaTime) = 0;
+    virtual void draw() = 0;
+};
+
 class Bullet {
 public:
     int x, y;
