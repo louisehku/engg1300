@@ -162,10 +162,8 @@ int main() {
     
     Game game;
 
-    battleBox.draw();
-    mvprintw(maxY - 3, 2, "Arrow keys to set direction, Space to stop/start");
-    mvprintw(maxY - 2, 2, "Q to quit");
-
+    BattleBox.draw();
+    
     while (true) {
         int ch = getch();
         game.handleInput(ch);
