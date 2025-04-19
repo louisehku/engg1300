@@ -2,9 +2,6 @@
 #include <vector>
 #include <ncursesw/ncurses.h>
 #include <unistd.h>
-#include <cmath>
-#include <cstdlib>
-#include <ctime>
 
 class Bullet {
 public:
@@ -48,29 +45,28 @@ private:
     std::vector<Bullet> bullets;
     std::vector<Enemy> enemies;
     int score;
+    int boxX, boxY; // Battle box position
 
 public:
-    Game() : player(40, 20), score(0) {
+    Game(int startX, int startY) : player(startX + 20, startY + 14), score(0), boxX(startX), boxY(startY) {
         // Create enemies
         for (int i = 0; i < 5; i++) {
             for (int j = 0; j < 10; j++) {
-                enemies.emplace_back(j * 6 + 5, i + 1); // Simple grid formation
+                enemies.emplace_back(startX + j * 6 + 5, startY + i + 1); // Simple grid formation
             }
         }
     }
 
     void update() {
-        // Move bullets
         for (int i = 0; i < bullets.size(); i++) {
             bullets[i].move();
-            // Check for collisions
             for (int j = 0; j < enemies.size(); j++) {
                 if (checkCollision(bullets[i], enemies[j])) {
                     bullets.erase(bullets.begin() + i);
                     enemies.erase(enemies.begin() + j);
                     score++;
-                    i--; // Adjust index after removal
-                    break; // Exit inner loop
+                    i--;
+                    break;
                 }
             }
         }
@@ -92,17 +88,17 @@ public:
     void handleInput(int ch) {
         switch (ch) {
             case KEY_LEFT:
-                if (player.x > 0) player.move(-1);
+                if (player.x > boxX) player.move(-1);
                 break;
             case KEY_RIGHT:
-                if (player.x < COLS - 1) player.move(1);
+                if (player.x < boxX + 39) player.move(1);
                 break;
             case ' ':
                 bullets.emplace_back(player.x, player.y - 1); // Shoot bullet
                 break;
             case 'q':
                 endwin();
-                exit(0); // Quit the game
+                exit(0);
         }
     }
 };
@@ -124,8 +120,8 @@ public:
         attron(A_REVERSE);
     
         // Draw the top and bottom borders of the battle box
-        for (int i = -1; i <= width+1; i++) {
-            mvaddch(y, x + i, ' ');              // Top border (space with reverse highlight)
+        for (int i = -1; i <= width; i++) {
+            mvaddch(y, x + i, ' ');              // Top border
             mvaddch(y + height, x + i, ' ');     // Bottom border
         }
     
@@ -133,8 +129,6 @@ public:
         for (int i = 0; i <= height; i++) {
             mvaddch(y + i, x, ' ');              // Left border
             mvaddch(y + i, x + width, ' ');      // Right border
-            mvaddch(y + i, x-1, ' ');            // Left border
-            mvaddch(y + i, x+1 + width, ' ');    // Right border
         }
     
         // Disable reverse highlighting
@@ -142,14 +136,9 @@ public:
         
         needsRedraw = false;
     }
-    void setNeedsRedraw() {
-        needsRedraw = true;
-    }
-
+    
     int getX() const { return x; }
     int getY() const { return y; }
-    int getWidth() const { return width; }
-    int getHeight() const { return height; }
 };
 
 int main() {
@@ -160,16 +149,15 @@ int main() {
     keypad(stdscr, TRUE);
     nodelay(stdscr, TRUE);
     
-    Game game;
-
-    // Get terminal dimensions
     int maxY, maxX;
     getmaxyx(stdscr, maxY, maxX);
 
     // Create battle box
     BattleBox battleBox(maxX/2 - 20, maxY/2 - 8, 40, 16);
     battleBox.draw();
-    
+
+    Game game(battleBox.getX(), battleBox.getY());
+
     while (true) {
         int ch = getch();
         game.handleInput(ch);
