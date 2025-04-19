@@ -166,8 +166,9 @@ int main() {
     int maxY, maxX;
     getmaxyx(stdscr, maxY, maxX);
 
-    // Create battle box and heart
+    // Create battle box
     BattleBox battleBox(maxX/2 - 20, maxY/2 - 8, 40, 16);
+    battleBox.draw();
     
     while (true) {
         int ch = getch();
