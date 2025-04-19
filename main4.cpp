@@ -156,7 +156,7 @@ public:
         // Create blocks
         for (int i = 0; i < 5; i++) {
             for (int j = 0; j < 10; j++) {
-                blocks.emplace_back(startX + j * 6 + 5, startY + i + 1); // Simple grid formation
+                blocks.emplace_back(startX + j * 6 + 5, startY + i + 1, 5, 1); 
             }
         }
     }
