@@ -194,54 +194,66 @@ public:
 };
 
 // Block class
-class Block : public GameObject {
+class Block {
 private:
-    int hitPoints;
-    int score;
-    int colorPair;
-    bool needsRedraw;
-    
+    int x, y;             // Position
+    int width, height;    // Size
+    bool active;          // Whether the block is active (not destroyed)
+    int colorPair;        // Color pair to use for the block
+
 public:
-    Block(float x, float y, float width, float height, int hitPoints = 1, int score = 100, int colorPair = 3)
-        : GameObject(x, y, width, height), hitPoints(hitPoints), score(score), colorPair(colorPair), needsRedraw(true) {}
-    
-    void update(float deltaTime) override {
-        // Blocks don't move, so nothing to update
-    }
-    
-    void draw() override {
+    Block(int startX, int startY, int w = 4, int h = 1, int color = 3) : 
+        x(startX), y(startY), width(w), height(h), active(true), colorPair(color) {}
+
+    void draw() {
         if (!active) return;
         
-        int currentX = static_cast<int>(position.x);
-        int currentY = static_cast<int>(position.y);
-        
-        // Only redraw if necessary
-        if (needsRedraw) {
-            attron(COLOR_PAIR(colorPair));
-            for (int y = 0; y < static_cast<int>(size.y); y++) {
-                for (int x = 0; x < static_cast<int>(size.x); x++) {
-                    mvaddch(currentY + y, currentX + x, ACS_CKBOARD);
-                }
+        attron(COLOR_PAIR(colorPair));
+        for (int row = 0; row < height; row++) {
+            for (int col = 0; col < width; col++) {
+                mvaddch(y + row, x + col, '#');
             }
-            attroff(COLOR_PAIR(colorPair));
-            needsRedraw = false;
+        }
+        attroff(COLOR_PAIR(colorPair));
+    }
+
+    void clear() {
+        // Clear the block from the screen
+        for (int row = 0; row < height; row++) {
+            for (int col = 0; col < width; col++) {
+                mvaddch(y + row, x + col, ' ');
+            }
         }
     }
-    
-    bool hit() {
-        hitPoints--;
-        if (hitPoints <= 0) {
-            active = false;
-            clearPrevious(); // Clear when destroyed
-            return true;
-        }
-        // Change color based on remaining hit points
-        colorPair = 3 + (3 - hitPoints);
-        needsRedraw = true;
-        return false;
+
+    // Check collision with the ball
+    bool collidesWith(const Ball& ball) {
+        if (!active) return false;
+        
+        float ballX = ball.getX();
+        float ballY = ball.getY();
+        
+        // Simple bounding box collision
+        return (ballX >= x && ballX < x + width &&
+                ballY >= y && ballY < y + height);
     }
     
-    int getScore() const { return score; }
+    void setActive(bool isActive) {
+        if (active && !isActive) {
+            // If being deactivated, clear from screen
+            clear();
+        }
+        active = isActive;
+    }
+    
+    bool isActive() const {
+        return active;
+    }
+
+    int getX() const { return x; }
+    int getY() const { return y; }
+    int getWidth() const { return width; }
+    int getHeight() const { return height; }
 };
 
 // Battle box (play area) - kept mostly the same
