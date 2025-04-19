@@ -1,4 +1,3 @@
-
 #include <iostream>
 #include <vector>
 #include <ncursesw/ncurses.h>
@@ -60,6 +59,97 @@ public:
     
     virtual void update(float deltaTime) = 0;
     virtual void draw() = 0;
+};
+
+class Paddle : public GameObject {
+private:
+    float speed;
+    
+public:
+    Paddle(float x, float y, float width, float height, float speed)
+        : GameObject(x, y, width, height), speed(speed) {}
+    
+    void update(float deltaTime) override {
+        // Movement is handled in the Game class based on input
+    }
+    
+    void draw() override {
+        int currentX = static_cast<int>(round(position.x));
+        int currentY = static_cast<int>(round(position.y));
+        
+        // Clear previous position if it changed
+        if (currentX != lastDrawnX || currentY != lastDrawnY) {
+            clearPrevious();
+            lastDrawnX = currentX;
+            lastDrawnY = currentY;
+        }
+        
+        // Draw paddle
+        attron(COLOR_PAIR(2)); // Paddle color
+        for (int x = 0; x < static_cast<int>(size.x); x++) {
+            mvaddch(currentY, currentX + x, ACS_BLOCK);
+        }
+        attroff(COLOR_PAIR(2));
+    }
+    
+    void moveLeft(float deltaTime, float minX) {
+        position.x -= speed * deltaTime;
+        if (position.x < minX) {
+            position.x = minX;
+        }
+    }
+    
+    void moveRight(float deltaTime, float maxX) {
+        position.x += speed * deltaTime;
+        if (position.x + size.x > maxX) {
+            position.x = maxX - size.x;
+        }
+    }
+};
+
+// Block class
+class Block : public GameObject {
+private:
+    int hitPoints;
+    int score;
+    int colorPair;
+    
+public:
+    Block(float x, float y, float width, float height, int hitPoints = 1, int score = 100, int colorPair = 3)
+        : GameObject(x, y, width, height), hitPoints(hitPoints), score(score), colorPair(colorPair) {}
+    
+    void update(float deltaTime) override {
+        // Blocks don't move, so nothing to update
+    }
+    
+    void draw() override {
+        if (!active) return;
+        
+        int currentX = static_cast<int>(round(position.x));
+        int currentY = static_cast<int>(round(position.y));
+        
+        attron(COLOR_PAIR(colorPair));
+        for (int y = 0; y < static_cast<int>(size.y); y++) {
+            for (int x = 0; x < static_cast<int>(size.x); x++) {
+                mvaddch(currentY + y, currentX + x, ACS_CKBOARD);
+            }
+        }
+        attroff(COLOR_PAIR(colorPair));
+    }
+    
+    bool hit() {
+        hitPoints--;
+        if (hitPoints <= 0) {
+            active = false;
+            clearPrevious(); // Clear when destroyed
+            return true;
+        }
+        // Change color based on remaining hit points
+        colorPair = 3 + (3 - hitPoints);
+        return false;
+    }
+    
+    int getScore() const { return score; }
 };
 
 class Bullet {
