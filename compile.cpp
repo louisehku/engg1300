@@ -2,6 +2,7 @@
 #include <vector>
 #include <ncursesw/ncurses.h>
 #include <unistd.h>
+#include <cmath> 
 
 // Vector2D class for positions and velocities
 class Vector2D {
