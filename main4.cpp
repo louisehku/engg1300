@@ -2,7 +2,7 @@
 #include <vector>
 #include <ncursesw/ncurses.h>
 #include <unistd.h>
-
+#include <cmath>
 
 class GameObject {
 protected:
