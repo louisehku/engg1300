@@ -2,119 +2,108 @@
 #include <vector>
 #include <ncursesw/ncurses.h>
 #include <unistd.h>
+#include <cmath>
 
-class Bullet {
+class GameObject {
+protected:
+    struct Position {
+        float x, y;
+    } position;
+
+    struct Size {
+        float x, y;
+    } size;
+
+    bool active = true;
+
 public:
-    int x, y;
-    Bullet(int startX, int startY) : x(startX), y(startY) {}
-    void move() { y--; } // Move bullet upwards
+    GameObject(float x, float y, float width, float height) {
+        position = {x, y};
+        size = {width, height};
+    }
+
+    virtual void update(float deltaTime) = 0;
+    virtual void draw() = 0;
+
+    bool isActive() const { return active; }
+    void deactivate() { active = false; }
 };
 
-class Enemy {
-public:
-    int x, y;
-    Enemy(int startX, int startY) : x(startX), y(startY) {}
-};
-
-class Player {
-public:
-    int x, y;
-    Player(int startX, int startY) : x(startX), y(startY) {}
-    void move(int dx) { x += dx; }
-};
-
-void drawPlayer(const Player& player) {
-    mvaddch(player.y, player.x, ACS_CKBOARD); // Player representation
-}
-
-void drawBullet(const Bullet& bullet) {
-    mvaddch(bullet.y, bullet.x, '|'); // Bullet representation
-}
-
-void drawEnemy(const Enemy& enemy, int row) {
-    int colorPair = 3 + (4 - row); // Different colors based on the row
-    attron(COLOR_PAIR(colorPair));
-    mvaddch(enemy.y, enemy.x, '#'); // Enemy representation
-    attroff(COLOR_PAIR(colorPair));
-}
-
-bool checkCollision(const Bullet& bullet, const Enemy& enemy) {
-    return bullet.x == enemy.x && bullet.y == enemy.y;
-}
-
-class Game {
+class Paddle : public GameObject {
 private:
-    Player player;
-    std::vector<Bullet> bullets;
-    std::vector<Enemy> enemies;
-    int score;
-    int boxX, boxY; // Battle box position
+    float speed;
 
 public:
-    Game(int startX, int startY) : player(startX + 20, startY + 14), score(0), boxX(startX), boxY(startY) {
-        setupEnemies(); // Call the new setup function
+    Paddle(float x, float y, float width, float height, float speed)
+        : GameObject(x, y, width, height), speed(speed) {}
+
+    void update(float deltaTime) override {
+        // Movement is handled in the Game class based on input
     }
 
-    void setupEnemies() {
-        int rows = 5;
-        int cols = 10;
-        int startX = boxX + 5; 
-        int startY = boxY + 1; 
-        int spacing = 2; 
+    void draw() override {
+        int currentX = static_cast<int>(round(position.x));
+        int currentY = static_cast<int>(round(position.y));
+        attron(COLOR_PAIR(2)); // Paddle color
+        for (int x = 0; x < static_cast<int>(size.x); x++) {
+            mvaddch(currentY, currentX + x, ACS_BLOCK);
+        }
+        attroff(COLOR_PAIR(2));
+    }
 
-        for (int i = 0; i < rows; i++) {
-            for (int j = 0; j < cols; j++) {
-                int enemyX = startX + j * (spacing + 2);
-                int enemyY = startY + i; 
-                enemies.emplace_back(enemyX, enemyY); 
+    void moveLeft(float deltaTime, float minX) {
+        position.x -= speed * deltaTime;
+        if (position.x < minX) {
+            position.x = minX;
+        }
+    }
+
+    void moveRight(float deltaTime, float maxX) {
+        position.x += speed * deltaTime;
+        if (position.x + size.x > maxX) {
+            position.x = maxX - size.x;
+        }
+    }
+};
+
+class Block : public GameObject {
+private:
+    int hitPoints;
+    int score;
+    int colorPair;
+
+public:
+    Block(float x, float y, float width, float height, int hitPoints = 1, int score = 100, int colorPair = 3)
+        : GameObject(x, y, width, height), hitPoints(hitPoints), score(score), colorPair(colorPair) {}
+
+    void update(float deltaTime) override {
+        // Blocks don't move, so nothing to update
+    }
+
+    void draw() override {
+        if (!active) return;
+        int currentX = static_cast<int>(round(position.x));
+        int currentY = static_cast<int>(round(position.y));
+        attron(COLOR_PAIR(colorPair));
+        for (int y = 0; y < static_cast<int>(size.y); y++) {
+            for (int x = 0; x < static_cast<int>(size.x); x++) {
+                mvaddch(currentY + y, currentX + x, ACS_CKBOARD);
             }
         }
+        attroff(COLOR_PAIR(colorPair));
     }
 
-    void update() {
-        for (int i = 0; i < bullets.size(); i++) {
-            bullets[i].move();
-            for (int j = 0; j < enemies.size(); j++) {
-                if (checkCollision(bullets[i], enemies[j])) {
-                    bullets.erase(bullets.begin() + i);
-                    enemies.erase(enemies.begin() + j);
-                    score++;
-                    i--;
-                    break;
-                }
-            }
+    bool hit() {
+        hitPoints--;
+        if (hitPoints <= 0) {
+            deactivate();
+            return true;
         }
+        colorPair = 3 + (3 - hitPoints);
+        return false;
     }
 
-    void draw() {
-        clear();
-        drawPlayer(player);
-        for (auto& bullet : bullets) {
-            drawBullet(bullet);
-        }
-        for (size_t i = 0; i < enemies.size(); i++) {
-            drawEnemy(enemies[i], i / 10); // Assuming 10 enemies per row
-        }
-        mvprintw(0, 0, "Score: %d", score);
-        refresh();
-    }
-
-    void handleInput(int ch) {
-        switch (ch) {
-            case KEY_LEFT:
-                if (player.x > boxX) player.move(-1);
-                break;
-            case KEY_RIGHT:
-                if (player.x < boxX + 39) player.move(1);
-                break;
-            case ' ':
-                bullets.emplace_back(player.x, player.y - 1); // Shoot bullet
-                break;
-            case 'q':
-                endwin();
-                exit(0);
-        }
-    }
+    int getScore() const { return score; }
 };
 
 class BattleBox {
@@ -124,35 +113,81 @@ private:
     bool needsRedraw;  // Flag to determine if the box needs redrawing
 
 public:
-    BattleBox(int startX, int startY, int w, int h) :
-        x(startX), y(startY), width(w), height(h), needsRedraw(true) {}
+    BattleBox(int startX, int startY, int w, int h)
+        : x(startX), y(startY), width(w), height(h), needsRedraw(true) {}
 
     void draw() {
         if (!needsRedraw) return;
-        
-        // Enable reverse highlighting
+
         attron(A_REVERSE);
-    
-        // Draw the top and bottom borders of the battle box
-        for (int i = -1; i <= width; i++) {
+        for (int i = -1; i <= width + 1; i++) {
             mvaddch(y, x + i, ' ');              // Top border
             mvaddch(y + height, x + i, ' ');     // Bottom border
         }
-    
-        // Draw the left and right borders of the battle box
         for (int i = 0; i <= height; i++) {
             mvaddch(y + i, x, ' ');              // Left border
             mvaddch(y + i, x + width, ' ');      // Right border
+            mvaddch(y + i, x - 1, ' ');          // Left border (extended)
+            mvaddch(y + i, x + 1 + width, ' ');  // Right border (extended)
         }
-    
-        // Disable reverse highlighting
         attroff(A_REVERSE);
-        
         needsRedraw = false;
     }
-    
+
+    void setNeedsRedraw() {
+        needsRedraw = true;
+    }
+
     int getX() const { return x; }
     int getY() const { return y; }
+    int getWidth() const { return width; }
+    int getHeight() const { return height; }
+};
+
+class Game {
+private:
+    Paddle paddle;
+    std::vector<Block> blocks;
+    int score;
+
+public:
+    Game(int startX, int startY)
+        : paddle(startX + 20, startY + 14, 10, 1, 5), score(0) {
+        // Create blocks
+        for (int i = 0; i < 5; i++) {
+            for (int j = 0; j < 10; j++) {
+                blocks.emplace_back(startX + j * 6 + 5, startY + i + 1); // Simple grid formation
+            }
+        }
+    }
+
+    void update() {
+        // Update game logic (e.g., check for collisions)
+    }
+
+    void draw() {
+        clear();
+        paddle.draw();
+        for (auto& block : blocks) {
+            block.draw();
+        }
+        mvprintw(0, 0, "Score: %d", score);
+        refresh();
+    }
+
+    void handleInput(int ch) {
+        switch (ch) {
+            case KEY_LEFT:
+                paddle.moveLeft(1.0f, 0);
+                break;
+            case KEY_RIGHT:
+                paddle.moveRight(1.0f, COLS);
+                break;
+            case 'q':
+                endwin();
+                exit(0);
+        }
+    }
 };
 
 int main() {
@@ -162,23 +197,17 @@ int main() {
     curs_set(0);
     keypad(stdscr, TRUE);
     nodelay(stdscr, TRUE);
-    
+    start_color();
+    init_pair(2, COLOR_CYAN, COLOR_BLACK);
+    init_pair(3, COLOR_RED, COLOR_BLACK);
+    init_pair(4, COLOR_GREEN, COLOR_BLACK);
+
     int maxY, maxX;
     getmaxyx(stdscr, maxY, maxX);
 
-    // Create battle box
     BattleBox battleBox(maxX / 2 - 20, maxY / 2 - 8, 40, 16);
     battleBox.draw();
-
     Game game(battleBox.getX(), battleBox.getY());
-
-    // Initialize colors
-    if (has_colors()) {
-        start_color();
-        init_pair(3, COLOR_RED, COLOR_BLACK);    // Red for the first row
-        init_pair(4, COLOR_YELLOW, COLOR_BLACK); // Yellow for the second row
-        init_pair(5, COLOR_GREEN, COLOR_BLACK);  // Green for the last row
-    }
 
     while (true) {
         int ch = getch();
