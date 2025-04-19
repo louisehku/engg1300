@@ -160,6 +160,16 @@ int main() {
     int maxY, maxX;
     getmaxyx(stdscr, maxY, maxX);
 
+    if (has_colors()) {
+        start_color();
+        init_pair(1, COLOR_RED, COLOR_BLACK);    // Ball
+        init_pair(2, COLOR_WHITE, COLOR_BLUE);   // Paddle
+        init_pair(3, COLOR_BLACK, COLOR_RED);    // Strong blocks
+        init_pair(4, COLOR_BLACK, COLOR_YELLOW); // Medium blocks
+        init_pair(5, COLOR_BLACK, COLOR_GREEN);  // Weak blocks
+        init_pair(6, COLOR_BLACK, COLOR_CYAN);   // One-hit blocks
+    }
+
     // Create battle box
     BattleBox battleBox(maxX/2 - 20, maxY/2 - 8, 40, 16);
     battleBox.draw();
