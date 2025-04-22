@@ -3,6 +3,7 @@
 #include <cmath>
 #include <cstring>
 #include <vector>
+#include <algorithm>
 
 // Forward declarations
 class Ball;
@@ -60,6 +61,11 @@ public:
             }
             attroff(COLOR_PAIR(1));
         }
+    }
+    
+    void setPosition(float newX, float newY) {
+        x = newX;
+        y = newY;
     }
 
     float getX() const { return x; }
@@ -186,6 +192,10 @@ public:
     }
 
     void setNeedsRedraw() { needsRedraw = true; }
+    int getX() const { return x; }
+    int getY() const { return y; }
+    int getWidth() const { return width; }
+    int getHeight() const { return height; }
 };
 
 class GameManager {
