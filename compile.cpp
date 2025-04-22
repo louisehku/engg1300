@@ -24,7 +24,7 @@ public:
     Paddle(int startX, int startY, int paddleWidth = 7) : 
         x(static_cast<float>(startX)), y(static_cast<float>(startY)), 
         lastDrawnX(startX), lastDrawnY(startY),
-        directionX(0.0f), speed(0.5f), width(paddleWidth), moving(false) {}
+        directionX(0.0f), speed(0.3f), width(paddleWidth), moving(false) {}
 
     void update() {
         if (moving) {
@@ -201,7 +201,7 @@ private:
     int colorPair;        // Color pair to use for the block
 
 public:
-    Block(int startX, int startY, int w = 4, int h = 1, int color = 3) 
+    Block(int startX, int startY, int w = 5, int h = 1, int color = 3) 
         : x(startX), y(startY), width(w), height(h), active(true), colorPair(color) {}
 
     void draw() {
