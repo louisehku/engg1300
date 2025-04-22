@@ -403,7 +403,7 @@ public:
         
         // Ball collision with paddle
         if (ballY > paddleY - 1 && ballY < paddleY &&
-            ballX >= paddleX && ballX < paddleX + paddle.getWidth()-1) {
+            ballX >= paddleX && ballX < paddleX + paddle.getWidth()) {
             
             // Ball hit paddle - bounce upward
             ball.reverseY();
@@ -411,7 +411,7 @@ public:
             // Change ball's horizontal direction based on where it hit the paddle
             // This gives more control to the player
             float hitPosition = (ballX - paddleX) / paddle.getWidth(); // 0.0 to 1.0
-            float newDirX = 2.0f * (hitPosition - 0.4f); // -1.0 to 1.0
+            float newDirX = 2.0f * (hitPosition - 0.5f); // -1.0 to 1.0
             newDirX = std::max(-0.8f, std::min(0.8f, newDirX));
             
             // Set new direction, keeping the y-direction the same but reversing it
