@@ -359,29 +359,6 @@ public:
     void update() {
         if (gameOver || gameWon) return;
         
-        // Update paddle position
-        paddle.update();
-        
-         // Ball collision with paddle
-        float paddleX = paddle.getX();
-        float paddleY = paddle.getY();
-        
-        if (ballY > paddleY - 1 && ballY < paddleY &&
-            ballX >= paddleX && ballX < paddleX + paddle.getWidth()) {
-            
-            // Ball hit paddle - bounce upward
-            ball.reverseY();
-            
-            // Change ball's horizontal direction based on where it hit the paddle
-            float hitPosition = (ballX - paddleX) / paddle.getWidth(); // 0.0 to 1.0
-            float newDirX = 2.0f * (hitPosition - 0.5f); // -1.0 to 1.0
-            newDirX = std::max(-0.8f, std::min(0.8f, newDirX));
-            
-            // Set new direction, ensuring it goes upward
-            ball.setDirection(newDirX, -abs(ball.getDirectionY()));
-        }
-        
-        
         // Update ball position
         ball.update();
         
@@ -403,6 +380,27 @@ public:
         if (ballY >= battleBox.getY() + battleBox.getHeight() - 1) {
             gameOver = true;
             return;
+        }
+
+        // Update paddle position
+        paddle.update();
+        
+         // Ball collision with paddle
+        float paddleX = paddle.getX();
+        float paddleY = paddle.getY();
+        
+        if (ballY > paddleY - 1 && ballY < paddleY && ballX >= paddleX && ballX < paddleX + paddle.getWidth()) {
+            
+            // Ball hit paddle - bounce upward
+            ball.reverseY();
+            
+            // Change ball's horizontal direction based on where it hit the paddle
+            float hitPosition = (ballX - paddleX) / paddle.getWidth(); // 0.0 to 1.0
+            float newDirX = 2.0f * (hitPosition - 0.5f); // -1.0 to 1.0
+            newDirX = std::max(-0.8f, std::min(0.8f, newDirX));
+            
+            // Set new direction, ensuring it goes upward
+            ball.setDirection(newDirX, -abs(ball.getDirectionY()));
         }
     
         // Ball collision with blocks
