@@ -27,10 +27,10 @@ public:
         lastDrawnX(startX), lastDrawnY(startY),
         directionX(0.0f), speed(0.5f), width(paddleWidth), moving(false) {}
 
-    void update() {
+    void update(float deltaTime) {
         if (moving) {
             // Move in the current direction (horizontal only)
-            x += directionX * speed;
+            x += directionX * speed * deltaTime;
         }
     }
 
@@ -363,7 +363,7 @@ public:
         }
     }
     
-    void update() {
+    void update(float deltaTime) {
         if (gameOver || gameWon) return;
         
         // Update paddle position
@@ -585,7 +585,7 @@ int main() {
         }
         
         // Update game state
-        game.update();
+         game.update(deltaTime);
         
         // Draw the game
         game.draw();
