@@ -308,12 +308,14 @@ private:
     int blockCount;
     bool gameOver;
     bool gameWon;
-    
+
 public:
     GameManager(int screenWidth, int screenHeight) : 
-        battleBox(screenWidth/2 - 20, screenHeight/2 - 8, 40, 16),
-        paddle(battleBox.getX() + (battleBox.getWidth() - paddle.getWidth()) / 2, battleBox.getY() + battleBox.getHeight() - 2);  // Just above the bottom of the battle box
-        ball(battleBox.getX() + (battleBox.getWidth() / 2), battleBox.getY() + (battleBox.getHeight() - 3));  // Adjusted to be above the paddle
+        battleBox(screenWidth / 2 - 20, screenHeight / 2 - 8, 40, 16),
+        paddle(battleBox.getX() + (battleBox.getWidth() - 7) / 2, 
+               battleBox.getY() + battleBox.getHeight() - 2), // Paddle just above the bottom of the box
+        ball(battleBox.getX() + (battleBox.getWidth() / 2), 
+             battleBox.getY() + (battleBox.getHeight() - 3)), // Ball above the paddle
         blockCount(0),
         gameOver(false),
         gameWon(false) {
