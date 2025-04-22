@@ -3,7 +3,6 @@
 #include <cmath>
 #include <cstring>
 #include <vector>
-#include <chrono>
 
 // Forward declarations
 class Ball;
@@ -27,10 +26,10 @@ public:
         lastDrawnX(startX), lastDrawnY(startY),
         directionX(0.0f), speed(0.5f), width(paddleWidth), moving(false) {}
 
-    void update(float deltaTime) {
+    void update() {
         if (moving) {
             // Move in the current direction (horizontal only)
-            x += directionX * speed * deltaTime;
+            x += directionX * speed;
         }
     }
 
@@ -115,11 +114,11 @@ public:
         directionX(0.7f), directionY(-0.7f), // Initial direction (up and to the right)
         speed(0.2f), active(true) {}
 
-    void update(float deltaTime) {
+    void update() {
         if (active) {
             // Move in the current direction scaled by deltaTime for smooth movement
-            x += directionX * speed * deltaTime;
-            y += directionY * speed * deltaTime;
+            x += directionX * speed;
+            y += directionY * speed;
         }
     }
 
@@ -363,11 +362,11 @@ public:
         }
     }
     
-    void update(float deltaTime) {
+    void update() {
         if (gameOver || gameWon) return;
         
         // Update paddle position
-        paddle.update(deltaTime);
+        paddle.update();
         
         // Constrain paddle position to stay within battle box
         float paddleX = paddle.getX();
@@ -380,7 +379,7 @@ public:
         }
         
         // Update ball position
-        ball.update(deltaTime); // Call ball update with deltaTime
+        ball.update(); 
         
         // Ball collision with walls
         float ballX = ball.getX();
@@ -560,16 +559,10 @@ int main() {
 
     // Create game manager
     GameManager game(maxX, maxY);
-
-    using namespace std::chrono;
-    auto lastTime = high_resolution_clock::now();
     
     // Game loop
     bool running = true;
     while (running) {
-        auto currentTime = high_resolution_clock::now();
-        float deltaTime = duration<float>(currentTime - lastTime).count();
-        lastTime = currentTime;
         // Process all available input
         int ch;
         mvprintw(maxY / 2, maxX / 2 - 5, "         ");
@@ -585,7 +578,7 @@ int main() {
         }
         
         // Update game state
-         game.update(deltaTime);
+         game.update();
         
         // Draw the game
         game.draw();
