@@ -10,7 +10,7 @@ class Paddle;
 class Block;
 class GameManager;
 
-// Paddle class
+// Paddle class (modified from Heart class)
 class Paddle {
 private:
     float x, y;           // Position with floating-point precision for smooth movement
@@ -34,12 +34,27 @@ public:
     }
 
     void setDirection(float dx) {
+        // Set a new direction vector (horizontal only)
         directionX = dx;
-        moving = (dx != 0.0f);  // Start moving when a direction is set
+        if (dx != 0.0f) {
+            moving = true;  // Start moving when a direction is set
+        }
+    }
+    
+    void setSpeed(float newSpeed) {
+        speed = newSpeed;
     }
     
     void stop() {
         moving = false;
+    }
+    
+    void start() {
+        moving = true;
+    }
+    
+    bool isMoving() const {
+        return moving;
     }
 
     void setPosition(float newX, float newY) {
@@ -60,12 +75,15 @@ public:
         
         // Only redraw if position has changed
         if (currentX != lastDrawnX || currentY != lastDrawnY) {
+            // Clear previous position if it's different
             clearPrevious();
+            
+            // Update last drawn position
             lastDrawnX = currentX;
             lastDrawnY = currentY;
         }
         
-        // Draw paddle
+        // Draw paddle (a line of characters)
         attron(COLOR_PAIR(1)); // Paddle color
         for (int i = 0; i < width; i++) {
             mvaddch(currentY, currentX + i, '=');
@@ -76,6 +94,8 @@ public:
     float getX() const { return x; }
     float getY() const { return y; }
     int getWidth() const { return width; }
+    float getDirectionX() const { return directionX; }
+    float getSpeed() const { return speed; }
 };
 
 // Ball class
@@ -91,23 +111,25 @@ public:
     Ball(int startX, int startY) : 
         x(static_cast<float>(startX)), y(static_cast<float>(startY)), 
         lastDrawnX(startX), lastDrawnY(startY),
-        directionX(0.7f), directionY(-0.7f),
+        directionX(0.7f), directionY(-0.7f), // Initial direction (up and to the right)
         speed(0.4f), active(true) {}
 
     void update() {
         if (active) {
+            // Move in the current direction
             x += directionX * speed;
             y += directionY * speed;
         }
     }
 
     void setDirection(float dx, float dy) {
+        // Set a new direction vector
         directionX = dx;
         directionY = dy;
         
         // Normalize the direction vector
         float length = sqrt(dx * dx + dy * dy);
-        if (length > 0) {
+        if (length > 0) { // Avoid division by zero
             directionX /= length;
             directionY /= length;
         }
@@ -121,12 +143,25 @@ public:
         directionY = -directionY + ((rand() % 20) / 100.0f - 0.1f);
     }
     
+    void setSpeed(float newSpeed) {
+        speed = newSpeed;
+    }
+    
+    void setActive(bool isActive) {
+        active = isActive;
+    }
+    
+    bool isActive() const {
+        return active;
+    }
+
     void setPosition(float newX, float newY) {
         x = newX;
         y = newY;
     }
 
     void clearPrevious() {
+        // Clear the previous position
         mvaddch(lastDrawnY, lastDrawnX, ' ');
     }
 
@@ -134,8 +169,12 @@ public:
         int currentX = static_cast<int>(round(x));
         int currentY = static_cast<int>(round(y));
         
+        // Only redraw if position has changed
         if (currentX != lastDrawnX || currentY != lastDrawnY) {
+            // Clear previous position if it's different
             clearPrevious();
+            
+            // Update last drawn position
             lastDrawnX = currentX;
             lastDrawnY = currentY;
         }
@@ -148,9 +187,11 @@ public:
 
     float getX() const { return x; }
     float getY() const { return y; }
+    float getDirectionX() const { return directionX; }
+    float getDirectionY() const { return directionY; }
+    float getSpeed() const { return speed; }
 };
 
-// Block class
 class Block {
 private:
     int x, y;             // Position
@@ -188,6 +229,7 @@ public:
         float ballX = ball.getX();
         float ballY = ball.getY();
 
+        // Simple bounding box collision
         return (ballX >= x && ballX < x + width &&
                 ballY >= y && ballY < y + height);
     }
@@ -209,7 +251,7 @@ public:
     int getHeight() const { return height; }
 };
 
-// BattleBox class
+// Battle box (play area) - kept mostly the same
 class BattleBox {
 private:
     int x, y;         // Top-left corner position
@@ -226,15 +268,18 @@ public:
         // Enable reverse highlighting
         attron(A_REVERSE);
     
-        // Draw the borders of the battle box
-        for (int i = -1; i <= width + 1; i++) {
-            mvaddch(y, x + i, ' ');              // Top border
+        // Draw the top and bottom borders of the battle box
+        for (int i = -1; i <= width+1; i++) {
+            mvaddch(y, x + i, ' ');              // Top border (space with reverse highlight)
             mvaddch(y + height, x + i, ' ');     // Bottom border
         }
     
+        // Draw the left and right borders of the battle box
         for (int i = 0; i <= height; i++) {
             mvaddch(y + i, x, ' ');              // Left border
             mvaddch(y + i, x + width, ' ');      // Right border
+            mvaddch(y + i, x-1, ' ');            // Left border
+            mvaddch(y + i, x+1 + width, ' ');    // Right border
         }
     
         // Disable reverse highlighting
@@ -253,7 +298,7 @@ public:
     int getHeight() const { return height; }
 };
 
-// GameManager class
+// Game Manager class to handle game state
 class GameManager {
 private:
     BattleBox battleBox;
@@ -266,11 +311,13 @@ private:
 
 public:
     GameManager(int screenWidth, int screenHeight) : 
+        void update(); // Ensure this function is declared
+        void draw();   // Ensure this function is declared
         battleBox(screenWidth / 2 - 20, screenHeight / 2 - 8, 40, 16),
         paddle(battleBox.getX() + (battleBox.getWidth() - 7) / 2, 
-               battleBox.getY() + battleBox.getHeight() - 1),
+               battleBox.getY() + battleBox.getHeight() - 1), // Paddle just above the bottom of the box
         ball(battleBox.getX() + (battleBox.getWidth() / 2), 
-             battleBox.getY() + (battleBox.getHeight() - 3)),
+             battleBox.getY() + (battleBox.getHeight() - 3)), // Ball above the paddle
         blockCount(0),
         gameOver(false),
         gameWon(false) {
@@ -280,24 +327,29 @@ public:
     }
     
     void initializeBlocks() {
+        // Clear existing blocks
         blocks.clear();
         blockCount = 0;
         
+        // Calculate the number of blocks that fit in the battle box
         int blockWidth = 5;
         int blockHeight = 1;
-        int padding = 1;
+        int padding = 1; // Space between blocks
         
         int boxWidth = battleBox.getWidth() - 2; // Accounting for border
-        int boxX = battleBox.getX() + 2;
-        int boxY = battleBox.getY() + 2;
+        int boxX = battleBox.getX() + 2; // Starting position (inside border)
+        int boxY = battleBox.getY() + 2; // Starting a bit down from the top
         
         int blocksPerRow = (boxWidth + padding) / (blockWidth + padding);
-        int maxRows = 5;
+        int maxRows = 5; // Number of rows of blocks
         
+        // Create the blocks
         for (int row = 0; row < maxRows; row++) {
             for (int col = 0; col < blocksPerRow; col++) {
                 int blockX = boxX + col * (blockWidth + padding);
                 int blockY = boxY + row * (blockHeight + padding);
+                
+                // Use different colors for different rows
                 int blockColor = 3 + (row % 5);
                 
                 blocks.push_back(Block(blockX, blockY, blockWidth, blockHeight, blockColor));
@@ -306,20 +358,19 @@ public:
         }
     }
     
-    void update() {
-        // Place update logic here
-    }
-
     void draw() {
         battleBox.draw();
         
+        // Draw blocks
         for (auto& block : blocks) {
             block.draw();
         }
         
+        // Draw paddle and ball
         paddle.draw();
         ball.draw();
         
+        // Draw game state messages
         int maxY, maxX;
         getmaxyx(stdscr, maxY, maxX);
         
@@ -327,12 +378,12 @@ public:
         mvprintw(maxY - 2, 2, "Space to stop/restart    Q to quit");
         
         if (gameOver) {
-            attron(COLOR_PAIR(1));
+            attron(COLOR_PAIR(1)); // Red for game over
             mvprintw(maxY / 2, maxX / 2 - 5, "GAME OVER");
             mvprintw(maxY / 2 + 1, maxX / 2 - 11, "Press ENTER to restart");
             attroff(COLOR_PAIR(1));
         } else if (gameWon) {
-            attron(COLOR_PAIR(3));
+            attron(COLOR_PAIR(3)); // Green for win
             mvprintw(maxY / 2, maxX / 2 - 9, "YOU WIN! ALL BLOCKS CLEARED");
             mvprintw(maxY / 2 + 1, maxX / 2 - 11, "Press ENTER to restart");
             attroff(COLOR_PAIR(3));
@@ -340,11 +391,42 @@ public:
     }
     
     void handleInput(int key) {
-        // Input handling logic
+        if (gameOver || gameWon) {
+            // Allow restart with space when game is over
+            if (key == '\n') {
+                reset();
+            }
+            return;
+        }
+        
+        if (key == KEY_LEFT) {
+            paddle.setDirection(-1.0f);
+            paddle.start();
+        } else if (key == KEY_RIGHT) {
+            paddle.setDirection(1.0f);
+            paddle.start();
+        } else if (key == '\n') {
+            paddle.stop();
+        }
     }
     
     void reset() {
-        // Reset game state logic
+        // Reset game state
+        gameOver = false;
+        gameWon = false;
+        
+        // Reset paddle and ball positions
+        int maxY, maxX;
+        getmaxyx(stdscr, maxY, maxX);
+        
+        paddle.setPosition(battleBox.getX() + (battleBox.getWidth() - paddle.getWidth()) / 2, battleBox.getY() + battleBox.getHeight() - 1); // Paddle at the bottom
+        ball.setPosition(battleBox.getX() + (battleBox.getWidth() / 2), battleBox.getY() + (battleBox.getHeight() - 3)); // Ball above the paddle
+        
+        // Reset ball direction
+        ball.setDirection(0.7f, -0.7f);
+        
+        // Reinitialize blocks
+        initializeBlocks();
     }
     
     bool isGameOver() const {
@@ -362,24 +444,36 @@ int main() {
     cbreak();
     noecho();
     keypad(stdscr, TRUE);
-    curs_set(0);
-    nodelay(stdscr, TRUE);
+    curs_set(0);  // Hide cursor
+    nodelay(stdscr, TRUE);  // Non-blocking input
     
+    // Set up colors if terminal supports them
     if (has_colors()) {
         start_color();
-        init_pair(1, COLOR_RED, COLOR_BLACK);
-        init_pair(2, COLOR_CYAN, COLOR_BLACK);
-        init_pair(3, COLOR_GREEN, COLOR_BLACK);
+        init_pair(1, COLOR_RED, COLOR_BLACK);    // Paddle color
+        init_pair(2, COLOR_CYAN, COLOR_BLACK);   // Ball color
+        init_pair(3, COLOR_GREEN, COLOR_BLACK);  // Block color 1
+        init_pair(4, COLOR_YELLOW, COLOR_BLACK); // Block color 2
+        init_pair(5, COLOR_MAGENTA, COLOR_BLACK);// Block color 3
+        init_pair(6, COLOR_BLUE, COLOR_BLACK);   // Block color 4
+        init_pair(7, COLOR_WHITE, COLOR_BLACK);  // Block color 5
     }
 
+    // Get terminal dimensions
     int maxY, maxX;
     getmaxyx(stdscr, maxY, maxX);
 
+    // Create game manager
     GameManager game(maxX, maxY);
     
+    // Game loop
     bool running = true;
     while (running) {
+        // Process all available input
         int ch;
+        mvprintw(maxY / 2, maxX / 2 - 5, "         ");
+        mvprintw(maxY / 2 + 1, maxX / 2 - 11, "                      ");
+        attroff(COLOR_PAIR(1));
         while ((ch = getch()) != ERR) {
             if (ch == 'q' || ch == 'Q') {
                 running = false;
@@ -389,13 +483,18 @@ int main() {
             }
         }
         
+        // Update game state
         game.update();
+        
+        // Draw the game
         game.draw();
 
+        // Refresh screen and control frame rate
         refresh();
-        usleep(16667);  // ~60 FPS
+        usleep(16667);  // ~60 FPS (1,000,000 microseconds / 60)
     }
 
+    // Clean up
     endwin();
     return 0;
 }
