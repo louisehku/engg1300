@@ -204,17 +204,30 @@ public:
     Block(int startX, int startY, int w = 4, int h = 1, int color = 3) : 
         x(startX), y(startY), width(w), height(h), active(true), colorPair(color) {}
 
-    void draw() {
-        if (!active) return;
-        
-        attron(COLOR_PAIR(colorPair));
-        for (int row = 0; row < height; row++) {
-            for (int col = 0; col < width; col++) {
-                mvaddch(y + row, x + col, '#');
-            }
+   void draw() {
+        if (!needsRedraw) return;
+
+        attron(A_REVERSE);
+        for (int i = -1; i <= width + 1; i++) {
+            mvaddch(y, x + i, ' ');
+            mvaddch(y + height, x + i, ' ');
         }
-        attroff(COLOR_PAIR(colorPair));
-    }
+        for (int i = 0; i <= height; i++) {
+            mvaddch(y + i, x, ' ');
+            mvaddch(y + i, x + width, ' ');
+            mvaddch(y + i, x - 1, ' ');
+            mvaddch(y + i, x + 1 + width, ' ');
+        }
+        attroff(A_REVERSE);
+        needsRedraw = false;
+   }
+
+    void setNeedsRedraw() { needsRedraw = true; }
+
+    int getX() const { return x; }
+    int getY() const { return y; }
+    int getWidth() const { return width; }
+    int getHeight() const { return height; }
 
     void clear() {
         // Clear the block from the screen
