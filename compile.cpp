@@ -313,7 +313,7 @@ public:
     GameManager(int screenWidth, int screenHeight) : 
         battleBox(screenWidth / 2 - 20, screenHeight / 2 - 8, 40, 16),
         paddle(battleBox.getX() + (battleBox.getWidth() - 7) / 2, 
-               battleBox.getY() + battleBox.getHeight() - 2), // Paddle just above the bottom of the box
+               battleBox.getY() + battleBox.getHeight() - 1), // Paddle just above the bottom of the box
         ball(battleBox.getX() + (battleBox.getWidth() / 2), 
              battleBox.getY() + (battleBox.getHeight() - 3)), // Ball above the paddle
         blockCount(0),
@@ -330,7 +330,7 @@ public:
         blockCount = 0;
         
         // Calculate the number of blocks that fit in the battle box
-        int blockWidth = 4;
+        int blockWidth = 5;
         int blockHeight = 1;
         int padding = 1; // Space between blocks
         
@@ -359,6 +359,19 @@ public:
     void update() {
         if (gameOver || gameWon) return;
         
+        // Update paddle position
+        paddle.update();
+        
+        // Constrain paddle position to stay within battle box
+        float paddleX = paddle.getX();
+        float paddleY = paddle.getY();
+        
+        if (paddleX < battleBox.getX() + 1) {
+            paddle.setPosition(static_cast<float>(battleBox.getX() + 1), paddleY);
+        } else if (paddleX + paddle.getWidth() > battleBox.getX() + battleBox.getWidth()) {
+            paddle.setPosition(static_cast<float>(battleBox.getX() + battleBox.getWidth() - paddle.getWidth()), paddleY);
+        }
+        
         // Update ball position
         ball.update();
         
@@ -381,28 +394,26 @@ public:
             gameOver = true;
             return;
         }
-
-        // Update paddle position
-        paddle.update();
         
-         // Ball collision with paddle
-        float paddleX = paddle.getX();
-        float paddleY = paddle.getY();
-        
-        if (ballY > paddleY - 1 && ballY < paddleY && ballX >= paddleX && ballX < paddleX + paddle.getWidth()) {
+        // Ball collision with paddle
+        if (ballY > paddleY - 1 && ballY < paddleY &&
+            ballX >= paddleX && ballX < paddleX + paddle.getWidth()-1) {
             
             // Ball hit paddle - bounce upward
             ball.reverseY();
             
             // Change ball's horizontal direction based on where it hit the paddle
+            // This gives more control to the player
             float hitPosition = (ballX - paddleX) / paddle.getWidth(); // 0.0 to 1.0
-            float newDirX = 2.0f * (hitPosition - 0.5f); // -1.0 to 1.0
+            float newDirX = 2.0f * (hitPosition - 0.4f); // -1.0 to 1.0
             newDirX = std::max(-0.8f, std::min(0.8f, newDirX));
             
-            // Set new direction, ensuring it goes upward
-            ball.setDirection(newDirX, -abs(ball.getDirectionY()));
+            // Set new direction, keeping the y-direction the same but reversing it
+            float dirY = -abs(ball.getDirectionY()); // Ensure ball goes upward
+            dirY = std::min(0.01f, newDirX);
+            ball.setDirection(newDirX, dirY);
         }
-    
+        
         // Ball collision with blocks
         for (auto& block : blocks) {
             if (block.isActive() && block.collidesWith(ball)) {
