@@ -24,7 +24,7 @@ public:
     Paddle(int startX, int startY, int paddleWidth = 7) : 
         x(static_cast<float>(startX)), y(static_cast<float>(startY)), 
         lastDrawnX(startX), lastDrawnY(startY),
-        directionX(0.0f), speed(0.5f), width(paddleWidth), moving(false) {}
+        directionX(0.0f), speed(0.3f), width(paddleWidth), moving(false) {}
 
     void update() {
         if (moving) {
