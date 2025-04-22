@@ -140,7 +140,7 @@ public:
     }
     
     void reverseY() {
-        directionY = -directionY;
+        directionY = -directionY + ((rand() % 20) / 100.0f - 0.1f);
     }
     
     void setSpeed(float newSpeed) {
@@ -396,22 +396,24 @@ public:
         }
         
         // Ball collision with paddle
+        float ballX = ball.getX();
+        float ballY = ball.getY();
+        float paddleX = paddle.getX();
+        float paddleY = paddle.getY();
+        
         if (ballY > paddleY - 1 && ballY < paddleY &&
-            ballX >= paddleX && ballX < paddleX + paddle.getWidth()-1) {
+            ballX >= paddleX && ballX < paddleX + paddle.getWidth()) {
             
             // Ball hit paddle - bounce upward
             ball.reverseY();
             
             // Change ball's horizontal direction based on where it hit the paddle
-            // This gives more control to the player
             float hitPosition = (ballX - paddleX) / paddle.getWidth(); // 0.0 to 1.0
-            float newDirX = 2.0f * (hitPosition - 0.4f); // -1.0 to 1.0
+            float newDirX = 2.0f * (hitPosition - 0.5f); // -1.0 to 1.0
             newDirX = std::max(-0.8f, std::min(0.8f, newDirX));
             
-            // Set new direction, keeping the y-direction the same but reversing it
-            float dirY = -abs(ball.getDirectionY()); // Ensure ball goes upward
-            dirY = std::min(0.01f, newDirX);
-            ball.setDirection(newDirX, dirY);
+            // Set new direction, ensuring it goes upward
+            ball.setDirection(newDirX, -abs(ball.getDirectionY()));
         }
         
         // Ball collision with blocks
