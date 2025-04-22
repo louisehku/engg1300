@@ -362,15 +362,25 @@ public:
         // Update paddle position
         paddle.update();
         
-        // Constrain paddle position to stay within battle box
+         // Ball collision with paddle
         float paddleX = paddle.getX();
         float paddleY = paddle.getY();
         
-        if (paddleX < battleBox.getX() + 1) {
-            paddle.setPosition(static_cast<float>(battleBox.getX() + 1), paddleY);
-        } else if (paddleX + paddle.getWidth() > battleBox.getX() + battleBox.getWidth()) {
-            paddle.setPosition(static_cast<float>(battleBox.getX() + battleBox.getWidth() - paddle.getWidth()), paddleY);
+        if (ballY > paddleY - 1 && ballY < paddleY &&
+            ballX >= paddleX && ballX < paddleX + paddle.getWidth()) {
+            
+            // Ball hit paddle - bounce upward
+            ball.reverseY();
+            
+            // Change ball's horizontal direction based on where it hit the paddle
+            float hitPosition = (ballX - paddleX) / paddle.getWidth(); // 0.0 to 1.0
+            float newDirX = 2.0f * (hitPosition - 0.5f); // -1.0 to 1.0
+            newDirX = std::max(-0.8f, std::min(0.8f, newDirX));
+            
+            // Set new direction, ensuring it goes upward
+            ball.setDirection(newDirX, -abs(ball.getDirectionY()));
         }
+        
         
         // Update ball position
         ball.update();
@@ -394,28 +404,7 @@ public:
             gameOver = true;
             return;
         }
-        
-        // Ball collision with paddle
-        float ballX = ball.getX();
-        float ballY = ball.getY();
-        float paddleX = paddle.getX();
-        float paddleY = paddle.getY();
-        
-        if (ballY > paddleY - 1 && ballY < paddleY &&
-            ballX >= paddleX && ballX < paddleX + paddle.getWidth()) {
-            
-            // Ball hit paddle - bounce upward
-            ball.reverseY();
-            
-            // Change ball's horizontal direction based on where it hit the paddle
-            float hitPosition = (ballX - paddleX) / paddle.getWidth(); // 0.0 to 1.0
-            float newDirX = 2.0f * (hitPosition - 0.5f); // -1.0 to 1.0
-            newDirX = std::max(-0.8f, std::min(0.8f, newDirX));
-            
-            // Set new direction, ensuring it goes upward
-            ball.setDirection(newDirX, -abs(ball.getDirectionY()));
-        }
-        
+    
         // Ball collision with blocks
         for (auto& block : blocks) {
             if (block.isActive() && block.collidesWith(ball)) {
