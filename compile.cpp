@@ -511,8 +511,10 @@ public:
         int maxY, maxX;
         getmaxyx(stdscr, maxY, maxX);
         
-        paddle.setPosition(maxX/2 - 3, maxY/2 + 14);
-        ball.setPosition(maxX/2, maxY/2 + 13);
+        paddle(battleBox.getX() + (battleBox.getWidth() - 7) / 2, 
+               battleBox.getY() + battleBox.getHeight() - 1), // Paddle just above the bottom of the box
+        ball(battleBox.getX() + (battleBox.getWidth() / 2), 
+             battleBox.getY() + (battleBox.getHeight() - 3)), // Ball above the paddle
         
         // Reset ball direction
         ball.setDirection(0.7f, -0.7f);
