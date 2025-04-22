@@ -1,4 +1,3 @@
-
 #include <ncursesw/ncurses.h>
 #include <unistd.h>
 #include <cmath>
@@ -312,8 +311,8 @@ private:
     
 public:
     GameManager(int screenWidth, int screenHeight) : 
-        battleBox(screenWidth/2 - 20, screenHeight/2 - 15, 40, 30),
-        paddle(screenWidth/2 - 3, screenHeight/2 + 14),
+        battleBox(screenWidth/2 - 20, screenHeight/2 - 8, 40, 16),
+        paddle(screenWidth/2 - 3, screenHeight/2 + 10),
         ball(screenWidth/2, screenHeight/2 + 13),
         blockCount(0),
         gameOver(false),
