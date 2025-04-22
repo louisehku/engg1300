@@ -24,7 +24,7 @@ public:
     Paddle(int startX, int startY, int paddleWidth = 7) : 
         x(static_cast<float>(startX)), y(static_cast<float>(startY)), 
         lastDrawnX(startX), lastDrawnY(startY),
-        directionX(0.0f), speed(0.3f), width(paddleWidth), moving(false) {}
+        directionX(0.0f), speed(0.5f), width(paddleWidth), moving(false) {}
 
     void update() {
         if (moving) {
@@ -112,7 +112,7 @@ public:
         x(static_cast<float>(startX)), y(static_cast<float>(startY)), 
         lastDrawnX(startX), lastDrawnY(startY),
         directionX(0.7f), directionY(-0.7f), // Initial direction (up and to the right)
-        speed(0.2f), active(true) {}
+        speed(0.4f), active(true) {}
 
     void update() {
         if (active) {
