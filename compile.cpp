@@ -312,8 +312,8 @@ private:
 public:
     GameManager(int screenWidth, int screenHeight) : 
         battleBox(screenWidth/2 - 20, screenHeight/2 - 8, 40, 16),
-        paddle(screenWidth/2 - 3, screenHeight/2 + 10),
-        ball(screenWidth/2, screenHeight/2 + 13),
+        paddle(battleBox.getX() + (battleBox.getWidth() - paddle.getWidth()) / 2, battleBox.getY() + battleBox.getHeight() - 2);  // Just above the bottom of the battle box
+        ball(battleBox.getX() + (battleBox.getWidth() / 2), battleBox.getY() + (battleBox.getHeight() - 3));  // Adjusted to be above the paddle
         blockCount(0),
         gameOver(false),
         gameWon(false) {
@@ -355,85 +355,92 @@ public:
     }
     
     void update() {
-    if (gameOver || gameWon) return;
-    
-    // Update paddle position
-    paddle.update();
-    
-    // Constrain paddle position to stay within battle box
-    float paddleX = paddle.getX();
-    float paddleY = paddle.getY();
-    
-    if (paddleX < battleBox.getX() + 1) {
-        paddle.setPosition(static_cast<float>(battleBox.getX() + 1), paddleY);
-    } else if (paddleX + paddle.getWidth() > battleBox.getX() + battleBox.getWidth() - 1) {
-        paddle.setPosition(static_cast<float>(battleBox.getX() + battleBox.getWidth() - paddle.getWidth() - 1), paddleY);
-    }
-    
-    // Update ball position
-    ball.update();
-    
-    // Ball collision with walls
-    float ballX = ball.getX();
-    float ballY = ball.getY();
-    
-    // Left and right walls
-    if (ballX <= battleBox.getX() + 1 || ballX >= battleBox.getX() + battleBox.getWidth() - 1) {
-        ball.reverseX();
-    }
-    
-    // Top wall
-    if (ballY <= battleBox.getY() + 1) {
-        ball.reverseY();
-    }
-    
-    // Bottom edge - game over
-    if (ballY >= battleBox.getY() + battleBox.getHeight() - 1) {
-        gameOver = true;
-        return;
-    }
-    
-    // Ball collision with paddle
-    if (ballY > paddleY - 1 && ballY < paddleY &&
-        ballX >= paddleX && ballX < paddleX + paddle.getWidth()) {
+        if (gameOver || gameWon) return;
         
-        // Ball hit paddle - bounce upward
-        ball.reverseY();
+        // Update paddle position
+        paddle.update();
         
-        // Change ball's horizontal direction based on where it hit the paddle
-        float hitPosition = (ballX - paddleX) / paddle.getWidth(); // 0.0 to 1.0
-        float newDirX = 2.0f * (hitPosition - 0.5f); // -1.0 to 1.0
-        newDirX = std::max(-0.8f, std::min(0.8f, newDirX));
+        // Constrain paddle position to stay within battle box
+        float paddleX = paddle.getX();
+        float paddleY = paddle.getY();
         
-        // Set new direction, keeping the y-direction the same but reversing it
-        float dirY = -abs(ball.getDirectionY()); // Ensure ball goes upward
-        ball.setDirection(newDirX, dirY);
-    }
-    
-    // Ball collision with blocks
-    for (auto& block : blocks) {
-        if (block.isActive() && block.collidesWith(ball)) {
-            // Block hit - deactivate it
-            block.setActive(false);
-            blockCount--;
+        if (paddleX < battleBox.getX() + 1) {
+            paddle.setPosition(static_cast<float>(battleBox.getX() + 1), paddleY);
+        } else if (paddleX + paddle.getWidth() > battleBox.getX() + battleBox.getWidth()) {
+            paddle.setPosition(static_cast<float>(battleBox.getX() + battleBox.getWidth() - paddle.getWidth()), paddleY);
+        }
+        
+        // Update ball position
+        ball.update();
+        
+        // Ball collision with walls
+        float ballX = ball.getX();
+        float ballY = ball.getY();
+        
+        // Left and right walls
+        if (ballX <= battleBox.getX() + 1 || ballX >= battleBox.getX() + battleBox.getWidth() - 1) {
+            ball.reverseX();
+        }
+        
+        // Top wall
+        if (ballY <= battleBox.getY() + 1) {
+            ball.reverseY();
+        }
+        
+        // Bottom edge - game over
+        if (ballY >= battleBox.getY() + battleBox.getHeight() - 1) {
+            gameOver = true;
+            return;
+        }
+        
+        // Ball collision with paddle
+        if (ballY > paddleY - 1 && ballY < paddleY &&
+            ballX >= paddleX && ballX < paddleX + paddle.getWidth()-1) {
             
-            // Bounce the ball
-            if (abs(ball.getDirectionX()) > abs(ball.getDirectionY())) {
-                ball.reverseX(); // Likely hit the side
-            } else {
-                ball.reverseY(); // Likely hit the top/bottom
+            // Ball hit paddle - bounce upward
+            ball.reverseY();
+            
+            // Change ball's horizontal direction based on where it hit the paddle
+            // This gives more control to the player
+            float hitPosition = (ballX - paddleX) / paddle.getWidth(); // 0.0 to 1.0
+            float newDirX = 2.0f * (hitPosition - 0.4f); // -1.0 to 1.0
+            newDirX = std::max(-0.8f, std::min(0.8f, newDirX));
+            
+            // Set new direction, keeping the y-direction the same but reversing it
+            float dirY = -abs(ball.getDirectionY()); // Ensure ball goes upward
+            dirY = std::min(0.01f, newDirX);
+            ball.setDirection(newDirX, dirY);
+        }
+        
+        // Ball collision with blocks
+        for (auto& block : blocks) {
+            if (block.isActive() && block.collidesWith(ball)) {
+                // Block hit - deactivate it
+                block.setActive(false);
+                blockCount--;
+                
+                // Bounce the ball
+                // Determine if the ball hit the side or top/bottom of the block
+                float ballDirX = ball.getDirectionX();
+                float ballDirY = ball.getDirectionY();
+                
+                // Simple approach: reverse direction based on ball's movement direction
+                if (abs(ballDirX) > abs(ballDirY)) {
+                    ball.reverseX(); // Likely hit the side
+                } else {
+                    ball.reverseY(); // Likely hit the top/bottom
+                }
+                
+                // Check if all blocks are destroyed (win condition)
+                if (blockCount <= 0) {
+                    gameWon = true;
+                }
+                
+                // Only handle one collision per update
+                break;
             }
-            
-            // Check if all blocks are destroyed (win condition)
-            if (blockCount <= 0) {
-                gameWon = true;
-            }
-            
-            // Only handle one collision per update
-            break;
         }
     }
-}
     
     void draw() {
         battleBox.draw();
