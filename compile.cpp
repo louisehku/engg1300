@@ -331,7 +331,7 @@ public:
         blockCount = 0;
         
         // Calculate the number of blocks that fit in the battle box
-        int blockWidth = 4;
+        int blockWidth = 5;
         int blockHeight = 1;
         int padding = 1; // Space between blocks
         
@@ -341,7 +341,12 @@ public:
         
         int blocksPerRow = (boxWidth + padding) / (blockWidth + padding);
         int maxRows = 5; // Number of rows of blocks
-        
+
+        // Calculate total width of all blocks in a row, including padding
+        int totalBlockWidth = blocksPerRow * blockWidth + (blocksPerRow - 1) * padding;
+    
+        // Calculate starting X position to center blocks
+        int startX = boxX + (boxWidth - totalBlockWidth) / 2;
         // Create the blocks
         for (int row = 0; row < maxRows; row++) {
             for (int col = 0; col < blocksPerRow; col++) {
