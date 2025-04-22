@@ -6,7 +6,7 @@
 #include <vector>
 
 // Forward declarations
-class Ball;
+class Ball
 class Paddle;
 class Block;
 class GameManager;
