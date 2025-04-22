@@ -114,11 +114,11 @@ public:
         directionX(0.7f), directionY(-0.7f), // Initial direction (up and to the right)
         speed(0.2f), active(true) {}
 
-    void update() {
+    void update(float deltaTime) {
         if (active) {
-            // Move in the current direction
-            x += directionX * speed;
-            y += directionY * speed;
+            // Move in the current direction scaled by deltaTime for smooth movement
+            x += directionX * speed * deltaTime;
+            y += directionY * speed * deltaTime;
         }
     }
 
@@ -366,7 +366,7 @@ public:
         if (gameOver || gameWon) return;
         
         // Update paddle position
-        paddle.update();
+        paddle.update(deltaTime);
         
         // Constrain paddle position to stay within battle box
         float paddleX = paddle.getX();
@@ -379,7 +379,7 @@ public:
         }
         
         // Update ball position
-        ball.update();
+        ball.update(deltaTime); // Call ball update with deltaTime
         
         // Ball collision with walls
         float ballX = ball.getX();
@@ -559,10 +559,16 @@ int main() {
 
     // Create game manager
     GameManager game(maxX, maxY);
+
+    using namespace std::chrono;
+    auto lastTime = high_resolution_clock::now();
     
     // Game loop
     bool running = true;
     while (running) {
+        auto currentTime = high_resolution_clock::now();
+        float deltaTime = duration<float>(currentTime - lastTime).count();
+        lastTime = currentTime;
         // Process all available input
         int ch;
         mvprintw(maxY / 2, maxX / 2 - 5, "         ");
