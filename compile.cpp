@@ -105,6 +105,11 @@ public:
         }
     }
 
+    void setPosition(float newX, float newY) {
+        x = newX;
+        y = newY;
+    }
+
     void reverseX() { directionX = -directionX; }
     void reverseY() { directionY = -directionY; }
 
@@ -124,6 +129,7 @@ public:
         }
     }
 
+    float getDirectionY() const { return directionY; }
     float getX() const { return x; }
     float getY() const { return y; }
 };
