@@ -112,7 +112,7 @@ public:
         x(static_cast<float>(startX)), y(static_cast<float>(startY)), 
         lastDrawnX(startX), lastDrawnY(startY),
         directionX(0.7f), directionY(-0.7f), // Initial direction (up and to the right)
-        speed(0.4f), active(true) {}
+        speed(0.2f), active(true) {}
 
     void update() {
         if (active) {
@@ -403,7 +403,7 @@ public:
         
         // Ball collision with paddle
         if (ballY > paddleY - 1 && ballY < paddleY &&
-            ballX >= paddleX && ballX < paddleX + paddle.getWidth()) {
+            ballX >= paddleX && ballX < paddleX + paddle.getWidth()-1) {
             
             // Ball hit paddle - bounce upward
             ball.reverseY();
@@ -411,7 +411,7 @@ public:
             // Change ball's horizontal direction based on where it hit the paddle
             // This gives more control to the player
             float hitPosition = (ballX - paddleX) / paddle.getWidth(); // 0.0 to 1.0
-            float newDirX = 2.0f * (hitPosition - 0.5f); // -1.0 to 1.0
+            float newDirX = 2.0f * (hitPosition - 0.4f); // -1.0 to 1.0
             newDirX = std::max(-0.8f, std::min(0.8f, newDirX));
             
             // Set new direction, keeping the y-direction the same but reversing it
@@ -511,9 +511,9 @@ public:
         int maxY, maxX;
         getmaxyx(stdscr, maxY, maxX);
         
-        paddle(battleBox.getX() + (battleBox.getWidth() - 7) / 2, 
+        paddle.setPosition(battleBox.getX() + (battleBox.getWidth() - 7) / 2, 
                battleBox.getY() + battleBox.getHeight() - 1), // Paddle just above the bottom of the box
-        ball(battleBox.getX() + (battleBox.getWidth() / 2), 
+        ball.setPosition(battleBox.getX() + (battleBox.getWidth() / 2), 
              battleBox.getY() + (battleBox.getHeight() - 3)), // Ball above the paddle
         
         // Reset ball direction
